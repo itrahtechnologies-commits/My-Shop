@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.my_shop_one_alpha_23.twa",
+      "sha256_cert_fingerprints": [
+        "5C:07:E3:86:E9:1B:86:EE:4A:15:83:1C:1C:8F:0F:B8:9C:5F:06:91:19:F1:53:C9:08:1C:EE:6F:DE:5A:E0:F3"
+      ]
+    }
+  }
+]
