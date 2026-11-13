@@ -102,16 +102,20 @@ function renderInstallButton() {
     return;
   }
 
+  const isLight = slot.getAttribute('data-theme') === 'light';
   const s = getStrings();
   slot.innerHTML = '';
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.id = 'pwa-install-btn';
   btn.title = s.installTitle;
-  btn.style.cssText =
-    'display:inline-flex;align-items:center;gap:6px;height:35px;padding:0 10px;border-radius:10px;' +
-    'border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.18);color:#FFFFFF;' +
-    'font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:0.2s;';
+  btn.style.cssText = isLight
+    ? 'display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;' +
+      'border:1px solid #C7D2FE;background:#EEF2FF;color:#4F46E5;' +
+      'font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:0.2s;'
+    : 'display:inline-flex;align-items:center;gap:6px;height:35px;padding:0 10px;border-radius:10px;' +
+      'border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.18);color:#FFFFFF;' +
+      'font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:0.2s;';
   btn.innerHTML =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +

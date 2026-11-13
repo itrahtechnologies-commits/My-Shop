@@ -28,6 +28,8 @@ export default defineConfig(() => {
           theme_color: '#6236FF',
           background_color: '#F8F9FA',
           display: 'standalone',
+          display_override: ['standalone'],
+          prefer_related_applications: false,
           orientation: 'portrait-primary',
           start_url: '/',
           scope: '/',
