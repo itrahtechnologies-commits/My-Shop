@@ -1,0 +1,6 @@
+{
+  "name": "MyShop",
+  "description": "Smart shop analytics, inventory management, and financial reporting tool by Itrah Matrix Technologies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

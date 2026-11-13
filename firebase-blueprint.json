@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction for sales, stock purchases, or expenses",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "description": "Unique timestamp transaction ID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["sale", "stock", "expense"],
+          "description": "Category of the transaction"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Product or expense name"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of units"
+        },
+        "unitType": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Unit label"
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "Price per unit in TZS"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Summary title of the transaction"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Total amount in TZS"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Formatted date string"
+        },
+        "fullDate": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "ISO timestamp string"
+        },
+        "shopName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Store name"
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Owner UID"
+        }
+      },
+      "required": ["type", "name", "amount", "date", "fullDate"]
+    },
+    "Shop": {
+      "title": "Shop",
+      "description": "Store configuration and metadata",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Name of the store"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Owner UID"
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Stores all financial transactions for the business"
+    },
+    "/shops/{shopId}": {
+      "schema": "Shop",
+      "description": "Stores shop profile and settings"
+    }
+  }
+}

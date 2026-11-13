@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock History | MyShop</title>
+    <meta name="theme-color" content="#6236FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyShop">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="/i18n.js"></script>
+    <script src="/db.js"></script>
+    <script type="module" src="/src/firebase.ts"></script>
+    <style>
+        :root {
+            --ink: #0d2255;
+            --ink-muted: #5A607A;
+            --blue: #4a90e2;
+            --blue-light: #EEF4FF;
+            --blue-mid: #185FA5;
+            --surface: #F8F9FA;
+            --card: #FFFFFF;
+            --border: rgba(0,0,0,0.07);
+            --red: #FF3B30;
+            --red-light: #FFF0EF;
+            --purple: #6236FF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #6236FF 0%, #3B0FCC 100%);
+            padding: 0 24px;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            height: 70px;
+            gap: 16px;
+        }
+
+        .back-btn {
+            width: 42px; height: 42px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.14); }
+        .back-btn:active { transform: scale(0.92); }
+        .back-btn svg { stroke: white; }
+
+        .header-text { flex: 1; }
+        .header-text h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.3px;
+        }
+        .header-text p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        .header-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* SUMMARY STRIP */
+        .summary-strip {
+            background: linear-gradient(160deg, #7C4FFF 0%, #4A1FCC 45%, #2D0FA8 100%);
+            padding: 0 24px 28px 24px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .summary-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 16px 18px;
+        }
+
+        .summary-card .label {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .summary-card .value {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .summary-card .value.accent { color: #c7dcff; }
+
+        /* CONTENT */
+        .content {
+            padding: 0 20px 100px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* FILTER */
+        .filter-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .filter-group { flex: 1; }
+
+        .filter-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+            margin-left: 4px;
+        }
+
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-group input[type="date"]:focus { border-color: var(--blue); }
+
+        .clear-btn {
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        #stock-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+        .clear-btn:hover { border-color: var(--blue); color: var(--blue-mid); }
+        .clear-btn:active { transform: scale(0.96); }
+
+        /* SECTION LABEL */
+        .section-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        /* STOCK CARDS */
+        .stock-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) auto;
+            gap: 16px;
+            min-height: 140px;
+            opacity: 0;
+            animation: fadeUp 0.4s ease both;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 16px; bottom: 16px;
+            width: 4px;
+            background: var(--blue);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .stock-icon {
+            width: 48px; height: 48px;
+            background: var(--blue-light);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            grid-row: span 2;
+        }
+
+        .stock-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+
+        .stock-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--ink);
+            line-height: 1.35;
+            margin-bottom: 6px;
+        }
+
+        .stock-date {
+            font-size: 12px;
+            color: var(--ink-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .stock-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: space-between;
+            text-align: right;
+            min-width: 110px;
+        }
+
+        .stock-amount {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--blue-mid);
+            white-space: nowrap;
+        }
+
+        .stock-note {
+            font-size: 12px;
+            color: var(--ink-muted);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .stock-card:hover {
+            box-shadow: 0 6px 24px rgba(74,144,226,0.13);
+            transform: translateY(-2px);
+        }
+
+        .stock-icon {
+            width: 46px; height: 46px;
+            background: var(--blue-light);
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .stock-icon svg { width: 22px; height: 22px; }
+
+        .stock-info { flex: 1; min-width: 0; }
+
+        .stock-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stock-date {
+            font-size: 11px;
+            color: var(--ink-muted);
+            margin-top: 3px;
+            font-weight: 400;
+        }
+
+        .stock-amount {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--blue-mid);
+            white-space: nowrap;
+        }
+
+        .delete-btn {
+            width: 36px; height: 36px;
+            border-radius: 12px;
+            background: var(--red-light);
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .delete-btn:hover { background: var(--red); }
+        .delete-btn:hover svg { stroke: white; }
+        .delete-btn:active { transform: scale(0.9); }
+        .delete-btn svg { stroke: var(--red); transition: stroke 0.2s; }
+
+        /* QUANTITY CONTROLS */
+        /* QUICK ADD QUANTITY */
+        .quick-add-section {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .quick-add-input {
+            width: 80px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .quick-add-input:focus {
+            border-color: var(--blue);
+        }
+
+        .tick-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #34C759;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .tick-btn:hover {
+            background: #2EAF50;
+        }
+
+        .tick-btn:active {
+            transform: scale(0.9);
+        }
+
+        .low-stock-badge {
+            background: var(--red-light);
+            color: var(--red);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .stock-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .stat-card {
+            background: var(--blue-light);
+            border: 1px solid rgba(74, 144, 226, 0.2);
+            border-radius: 14px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .stat-card-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--blue-mid);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-card-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--blue-mid);
+        }
+
+        /* NOTIFICATION */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--red);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(255, 59, 48, 0.3);
+            animation: slideInRight 0.3s ease both;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(400px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 60px 30px;
+            text-align: center;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .empty-icon {
+            width: 64px; height: 64px;
+            background: var(--blue-light);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .empty-state h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+
+        .empty-state p { font-size: 13px; color: var(--ink-muted); }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* TOTAL BAR */
+        .total-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.06);
+        }
+
+        .total-bar .tl { font-size: 12px; color: var(--ink-muted); font-weight: 500; }
+        .total-bar .tv {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-mid);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-inner">
+            <a href="index.html" class="back-btn" title="Back to Dashboard">
+                <svg width="20" height="20" fill="none" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div class="header-text">
+                <h1 data-i18n="stockHistory">Stock History</h1>
+                <p data-i18n="stockSubtitle">Inventory cost tracker</p>
+            </div>
+            <button onclick="toggleAppLanguage()" style="background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.25); color:white; font-size:11px; font-weight:700; padding:6px 10px; border-radius:12px; cursor:pointer;">
+                <span id="lang-text">SW</span>
+            </button>
+            <div class="header-badge" id="count-badge">0 records</div>
+        </div>
+    </div>
+
+    <div class="summary-strip">
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="label" data-i18n="totalInvested">Total Invested</div>
+                <div class="value accent" id="summary-total">TZS 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label" data-i18n="entries">Transactions</div>
+                <div class="value" id="summary-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label data-i18n="from">From</label>
+                <input type="date" id="date-from" onchange="renderStock()">
+            </div>
+            <div class="filter-group">
+                <label data-i18n="to">To</label>
+                <input type="date" id="date-to" onchange="renderStock()">
+            </div>
+            <button class="clear-btn" onclick="clearFilter()" data-i18n="clear">All</button>
+        </div>
+
+        <div class="section-label" id="section-label">Recent Stock</div>
+        <div id="stock-list"></div>
+    </div>
+
+    <div id="notification-container"></div>
+
+    <div class="total-bar">
+        <span class="tl" data-i18n="showingTotal">Showing total</span>
+        <span class="tv" id="bottom-total">TZS 0</span>
+    </div>
+
+    <script>
+        const LOW_STOCK_THRESHOLD = 5;
+
+        function showNotification(message) {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.innerText = message;
+            container.appendChild(notif);
+            setTimeout(() => notif.remove(), 4000);
+        }
+
+        function renderStock() {
+            const stockList = document.getElementById('stock-list');
+            const dateFrom  = document.getElementById('date-from').value;
+            const dateTo    = document.getElementById('date-to').value;
+
+            const allTransactions = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+            
+            // Tenga mauzo (sales) kwa ajili ya kupunguza stock
+            const salesData = allTransactions.filter(t => t.type === 'sale');
+            let filteredData = allTransactions.filter(t => t.type === 'stock');
+
+            if (dateFrom || dateTo) {
+                filteredData = filteredData.filter(t => {
+                    const tDate = new Date(t.fullDate || t.date);
+                    tDate.setHours(0,0,0,0);
+                    if (dateFrom && dateTo) {
+                        return tDate >= new Date(dateFrom) && tDate <= new Date(dateTo);
+                    } else if (dateFrom) {
+                        return tDate >= new Date(dateFrom);
+                    } else {
+                        return tDate <= new Date(dateTo);
+                    }
+                });
+            }
+
+            filteredData = [...filteredData].reverse();
+
+            let totalInvestedCalculated = 0;
+
+            if (filteredData.length === 0) {
+                stockList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="28" height="28" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M20 13H4v-2h16v2zM20 17H4v-2h16v2zM20 9H4V7h16v2z"/>
+                            </svg>
+                        </div>
+                        <h3>No Stock Found</h3>
+                        <p>No records match the selected period.</p>
+                    </div>`;
+                
+                document.getElementById('summary-total').innerText = 'TZS 0';
+                document.getElementById('summary-count').innerText = '0';
+                document.getElementById('count-badge').innerText   = '0 records';
+                document.getElementById('bottom-total').innerText  = 'TZS 0';
+                return;
+            }
+
+            stockList.innerHTML = '';
+
+            filteredData.forEach((stock, idx) => {
+                const originalIndex = allTransactions.findIndex(t => t === stock);
+                
+                const originalQuantity = parseInt(stock.quantity, 10) || 0;
+                const unitPrice = parseFloat(stock.unitPrice) || (originalQuantity > 0 ? (parseFloat(stock.amount) || 0) / originalQuantity : 0);
+
+                const totalSoldUnits = salesData
+                    .filter(s => s.name && stock.name && s.name.toLowerCase() === stock.name.toLowerCase())
+                    .reduce((sum, s) => sum + (parseInt(s.quantity, 10) || 0), 0);
+
+                const quantity = Math.max(0, originalQuantity - totalSoldUnits);
+                const adjustedAmount = quantity * unitPrice;
+                totalInvestedCalculated += adjustedAmount;
+
+                const transactionAmount = parseFloat(stock.amount) || 0;
+                const isLowStock = quantity <= LOW_STOCK_THRESHOLD;
+                const lowStockHtml = isLowStock ? `<span class="low-stock-badge">Low Stock</span>` : '';
+
+                const stockLabel = stock.quantity && stock.unitType
+                    ? `${stock.quantity} ${stock.unitType} of ${stock.name || stock.title}`
+                    : (stock.name || stock.title);
+
+                const card = document.createElement('div');
+                card.className = 'stock-card';
+                card.style.animationDelay = (idx * 0.06) + 's';
+
+                card.innerHTML = `
+                    <div class="stock-icon">
+                        <svg viewBox="0 0 24 24" fill="#185FA5">
+                            <path d="M20 13H4v-2h16v2zM20 17H4v-2h16v2zM20 9H4V7h16v2z"/>
+                        </svg>
+                    </div>
+                    <div class="stock-info" style="flex: 1;">
+                        <div>
+                            <div class="stock-title">${stockLabel}</div>
+                            <div class="stock-date">${stock.date} &bull; STOCK</div>
+                            <div style="font-size:13px; color:var(--ink); margin-top:8px; font-weight:600;">TZS ${transactionAmount.toLocaleString()}</div>
+                            ${lowStockHtml}
+                        </div>
+                        <div class="stock-stats">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Remaining Value</div>
+                                <div class="stat-card-value">TZS ${adjustedAmount.toLocaleString()}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Remaining Stock</div>
+                                <div class="stat-card-value">${quantity} ${stock.unitType || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteStock(${stock.id})">
+                        <svg width="16" height="16" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                    </button>
+                `;
+                stockList.appendChild(card);
+            });
+
+            document.getElementById('summary-total').innerText = 'TZS ' + totalInvestedCalculated.toLocaleString();
+            document.getElementById('summary-count').innerText = filteredData.length;
+            document.getElementById('count-badge').innerText   = filteredData.length + ' record' + (filteredData.length !== 1 ? 's' : '');
+            document.getElementById('bottom-total').innerText  = 'TZS ' + totalInvestedCalculated.toLocaleString();
+            document.getElementById('section-label').innerText = (dateFrom || dateTo) ? 'Filtered Results' : 'Recent Stock';
+        }
+
+        function clearFilter() {
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value   = '';
+            renderStock();
+        }
+
+        function deleteStock(id) {
+            const confirmMsg = typeof t === 'function' ? t('deleteStockConfirm') : 'Delete this stock entry?';
+            if (confirm(confirmMsg)) {
+                let all = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+                all = all.filter(item => item.id !== id);
+                localStorage.setItem('myShop_transactions', JSON.stringify(all));
+                if (window.MyShopDB && window.MyShopDB.deleteTransaction) {
+                    window.MyShopDB.deleteTransaction(id).catch(console.error);
+                }
+                renderStock();
+            }
+        }
+
+        window.addEventListener('languageChanged', renderStock);
+        window.addEventListener('cloudDataSynced', renderStock);
+        window.onload = renderStock;
+    </script>
+</body>
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales | MyShop</title>
+    <meta name="theme-color" content="#6236FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyShop">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="/i18n.js"></script>
+    <script src="/db.js"></script>
+    <script type="module" src="/src/firebase.ts"></script>
+    <style>
+        :root {
+            --ink: #0d2255;
+            --ink-muted: #5A607A;
+            --blue: #4a90e2;
+            --blue-light: #EEF4FF;
+            --blue-mid: #185FA5;
+            --blue-dark: #0d2255;
+            --surface: #F8F9FA;
+            --card: #FFFFFF;
+            --border: rgba(0,0,0,0.07);
+            --red: #FF3B30;
+            --red-light: #FFF0EF;
+            --accent: #6236FF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #6236FF 0%, #3B0FCC 100%);
+            padding: 0 24px;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            height: 70px;
+            gap: 16px;
+        }
+
+        .back-btn {
+            width: 42px; height: 42px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.14); }
+        .back-btn:active { transform: scale(0.92); }
+        .back-btn svg { stroke: white; }
+
+        .header-text { flex: 1; }
+        .header-text h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.3px;
+        }
+        .header-text p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        .header-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── SUMMARY STRIP ── */
+        .summary-strip {
+            background: linear-gradient(160deg, #7C4FFF 0%, #4A1FCC 45%, #2D0FA8 100%);
+            padding: 0 24px 28px 24px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .summary-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 16px 18px;
+        }
+
+        .summary-card .label {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .summary-card .value {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .summary-card .value.green { color: #c7dcff; }
+
+        /* ── CONTENT ── */
+        .content {
+            padding: 0 20px 100px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ── FILTER ── */
+        .filter-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .filter-group {
+            flex: 1;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+            margin-left: 4px;
+        }
+
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group input[type="date"]:focus {
+            border-color: var(--blue);
+        }
+
+        .clear-btn {
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            margin-bottom: 0;
+        }
+        .clear-btn:hover { border-color: var(--blue); color: var(--blue-mid); }
+        .clear-btn:active { transform: scale(0.96); }
+
+        /* ── SECTION LABEL ── */
+        .section-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        /* ── SALE CARDS ── */
+        .sale-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 18px 18px 18px 20px;
+            display: grid;
+            grid-template-columns: 46px 1fr auto;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            opacity: 0;
+            animation: fadeUp 0.4s ease both;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sale-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 20%; bottom: 20%;
+            width: 3px;
+            background: var(--blue);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sale-card:hover {
+            box-shadow: 0 6px 24px rgba(74,144,226,0.13);
+            transform: translateY(-2px);
+        }
+
+        .sale-icon {
+            width: 46px; height: 46px;
+            background: var(--blue-light);
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            grid-row: span 2;
+        }
+
+        .sale-icon svg { width: 20px; height: 20px; }
+
+        .sale-info { 
+            flex: 1; 
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sale-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--ink);
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.3;
+        }
+
+        .sale-date {
+            font-size: 11px;
+            color: var(--ink-muted);
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        .sale-amount {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--blue-mid);
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .delete-btn {
+            width: 36px; height: 36px;
+            border-radius: 12px;
+            background: var(--red-light);
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .delete-btn:hover { background: var(--red); }
+        .delete-btn:hover svg { stroke: white; }
+        .delete-btn:active { transform: scale(0.9); }
+        .delete-btn svg { stroke: var(--red); transition: stroke 0.2s; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 60px 30px;
+            text-align: center;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .empty-icon {
+            width: 64px; height: 64px;
+            background: var(--blue-light);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .empty-state h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            color: var(--ink-muted);
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── TOTAL BAR ── */
+        .total-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.06);
+        }
+
+        .total-bar .tl { font-size: 12px; color: var(--ink-muted); font-weight: 500; }
+        .total-bar .tv {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-mid);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="index.html" class="back-btn" title="Back to Dashboard">
+                <svg width="20" height="20" fill="none" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div class="header-text">
+                <h1 data-i18n="salesTitle">Sales History</h1>
+                <p data-i18n="salesSubtitle">Daily revenue tracker</p>
+            </div>
+            <button onclick="toggleAppLanguage()" style="background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.25); color:white; font-size:11px; font-weight:700; padding:6px 10px; border-radius:12px; cursor:pointer;">
+                <span id="lang-text">SW</span>
+            </button>
+            <div class="header-badge" id="count-badge">0 records</div>
+        </div>
+    </div>
+
+    <!-- SUMMARY STRIP -->
+    <div class="summary-strip">
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="label" data-i18n="totalRevenue">Total Revenue</div>
+                <div class="value green" id="summary-total">TZS 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label" data-i18n="entries">Transactions</div>
+                <div class="value" id="summary-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- FILTER -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <label data-i18n="from">From</label>
+                <input type="date" id="date-from" onchange="renderSales()">
+            </div>
+            <div class="filter-group">
+                <label data-i18n="to">To</label>
+                <input type="date" id="date-to" onchange="renderSales()">
+            </div>
+            <button class="clear-btn" onclick="clearFilter()" data-i18n="clear">All</button>
+        </div>
+
+        <div class="section-label" id="section-label" data-i18n="recentSales">Recent Sales</div>
+
+        <!-- LIST -->
+        <div id="sales-list"></div>
+    </div>
+
+    <!-- TOTAL BAR -->
+    <div class="total-bar">
+        <span class="tl" data-i18n="showingTotal">Showing total</span>
+        <span class="tv" id="bottom-total">TZS 0</span>
+    </div>
+
+    <script>
+        function renderSales() {
+            const salesList = document.getElementById('sales-list');
+            const dateFrom  = document.getElementById('date-from').value;
+            const dateTo    = document.getElementById('date-to').value;
+
+            const allTransactions = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+            let filteredData = allTransactions.filter(t => t.type === 'sale');
+
+            if (dateFrom || dateTo) {
+                filteredData = filteredData.filter(t => {
+                    const tDate = new Date(t.fullDate || t.date);
+                    tDate.setHours(0,0,0,0);
+                    if (dateFrom && dateTo) {
+                        return tDate >= new Date(dateFrom) && tDate <= new Date(dateTo);
+                    } else if (dateFrom) {
+                        return tDate >= new Date(dateFrom);
+                    } else {
+                        return tDate <= new Date(dateTo);
+                    }
+                });
+            }
+
+            filteredData = [...filteredData].reverse();
+
+            const total = filteredData.reduce((s, t) => s + parseFloat(t.amount), 0);
+
+            document.getElementById('summary-total').innerText = 'TZS ' + total.toLocaleString();
+            document.getElementById('summary-count').innerText = filteredData.length;
+            document.getElementById('count-badge').innerText   = filteredData.length + ' record' + (filteredData.length !== 1 ? 's' : '');
+            document.getElementById('bottom-total').innerText  = 'TZS ' + total.toLocaleString();
+            document.getElementById('section-label').innerText =
+                (dateFrom || dateTo) ? 'Filtered Results' : 'Recent Sales';
+
+            if (filteredData.length === 0) {
+                const noTitle = typeof t === 'function' ? t('noSalesFound') : 'No Sales Found';
+                const noDesc  = typeof t === 'function' ? t('noSalesDesc') : 'No records match the selected period.';
+                salesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="28" height="28" fill="none" stroke="#185FA5" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3>${noTitle}</h3>
+                        <p>${noDesc}</p>
+                    </div>`;
+                return;
+            }
+
+            salesList.innerHTML = '';
+
+            filteredData.forEach((sale, idx) => {
+                const saleLabel = sale.quantity && sale.unitType
+                    ? `${sale.quantity} ${sale.unitType} of ${sale.name || sale.title}`
+                    : (sale.name || sale.title || sale.title);
+                const card = document.createElement('div');
+                card.className = 'sale-card';
+                card.style.animationDelay = (idx * 0.06) + 's';
+                card.innerHTML = `
+                    <div class="sale-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2">
+                            <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                    </div>
+                    <div class="sale-info">
+                        <div class="sale-amount">+TZS ${parseFloat(sale.amount).toLocaleString()}</div>
+                        <div class="sale-title">${saleLabel}</div>
+                        <div class="sale-date">${sale.date} &bull; ${typeof t === 'function' ? t('sales').toUpperCase() : 'SALE'}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteSale(${sale.id})">
+                        <svg width="16" height="16" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                    </button>
+                `;
+                salesList.appendChild(card);
+            });
+        }
+
+        function clearFilter() {
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value   = '';
+            renderSales();
+        }
+
+        function deleteSale(id) {
+            const confirmMsg = typeof t === 'function' ? t('deleteSaleConfirm') : 'Delete this sale?';
+            if (confirm(confirmMsg)) {
+                let all = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+                all = all.filter(item => item.id !== id);
+                localStorage.setItem('myShop_transactions', JSON.stringify(all));
+                if (window.MyShopDB && window.MyShopDB.deleteTransaction) {
+                    window.MyShopDB.deleteTransaction(id).catch(console.error);
+                }
+                renderSales();
+            }
+        }
+
+        window.addEventListener('languageChanged', renderSales);
+        window.addEventListener('cloudDataSynced', renderSales);
+        window.onload = renderSales;
+    </script>
+</body>
+</html>

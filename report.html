@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report | MyShop</title>
+    <meta name="theme-color" content="#6236FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyShop">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="/i18n.js"></script>
+    <script src="/db.js"></script>
+    <script type="module" src="/src/firebase.ts"></script>
+    <style>
+        :root {
+            --ink: #0d2255;
+            --ink-muted: #5A607A;
+            --blue: #4a90e2;
+            --blue-light: #EEF4FF;
+            --blue-mid: #185FA5;
+            --surface: #F8F9FA;
+            --card: #FFFFFF;
+            --border: rgba(0,0,0,0.07);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(135deg, #6236FF 0%, #3B0FCC 100%);
+            padding: 0 24px;
+        }
+
+        .header-inner {
+            display: flex; align-items: center; height: 70px; gap: 16px;
+        }
+
+        .back-btn {
+            width: 42px; height: 42px; border-radius: 14px;
+            background: rgba(255,255,255,0.08); border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0; text-decoration: none;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.14); }
+        .back-btn:active { transform: scale(0.92); }
+        .back-btn svg { stroke: white; }
+
+        .header-text { flex: 1; }
+        .header-text h1 {
+            font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.3px;
+        }
+        .header-text p { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+        .header-badge {
+            background: rgba(255,255,255,0.2); color: white;
+            font-size: 11px; font-weight: 700; padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        /* SUMMARY STRIP - Radius Removed from bottom */
+        .summary-strip {
+            background: linear-gradient(160deg, #7C4FFF 0%, #4A1FCC 45%, #2D0FA8 100%);
+            padding: 16px 24px 35px 24px;
+            /* Radius removed to make it flat */
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .net-block { text-align: center; margin-bottom: 18px; }
+        .net-label {
+            font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+        }
+        .net-value {
+            font-size: 38px; font-weight: 800; color: white; letter-spacing: -1.5px;
+        }
+
+        .summary-cards {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+
+        .summary-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; padding: 14px 16px;
+        }
+        .summary-card .label {
+            font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+        }
+        .summary-card .value {
+            font-size: 18px; font-weight: 800; color: white;
+        }
+        .summary-card .value.income  { color: #6EF0A4; }
+        .summary-card .value.expense { color: #FFD580; }
+
+        /* CONTENT */
+        .content {
+            padding: 0 20px 120px;
+            max-width: 600px; margin: 0 auto;
+        }
+
+        /* STICKY FILTER */
+        .sticky-filter {
+            position: sticky;
+            top: 70px;
+            z-index: 80;
+            background: var(--surface);
+            padding: 16px 0 10px;
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* SECTION LABEL */
+        .section-label {
+            font-size: 13px; font-weight: 700; color: var(--ink-muted);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 24px 0 14px;
+        }
+
+        /* FILTER CARD */
+        .filter-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 22px; padding: 20px; margin-bottom: 16px;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .quick-btns {
+            display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+        }
+
+        .qbtn {
+            padding: 9px 16px; border-radius: 14px;
+            border: 1.5px solid var(--border); background: var(--blue-light);
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+            color: var(--blue-mid); cursor: pointer; transition: all 0.2s;
+        }
+        .qbtn:hover { background: var(--blue-mid); color: white; border-color: var(--blue-mid); }
+        .qbtn:active { transform: scale(0.95); }
+        .qbtn.active { background: var(--blue-mid); color: white; border-color: var(--blue-mid); }
+
+        .date-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+
+        .date-group label {
+            display: block; font-size: 10px; font-weight: 700;
+            color: var(--ink-muted); text-transform: uppercase;
+            letter-spacing: 0.6px; margin-bottom: 6px; margin-left: 4px;
+        }
+
+        .date-group input[type="date"] {
+            width: 100%; padding: 12px 14px; border-radius: 16px;
+            border: 1.5px solid var(--border); background: #F8F9FA;
+            font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink);
+            outline: none; transition: border-color 0.2s;
+        }
+        .date-group input[type="date"]:focus { border-color: var(--blue); background: white; }
+
+        /* GENERATE BUTTON */
+        .generate-wrap {
+            padding: 8px 0 0;
+            animation: fadeUp 0.5s ease both;
+            animation-delay: 0.1s;
+        }
+
+        .btn-generate {
+            width: 100%; padding: 18px;
+            background: linear-gradient(135deg, #7C4FFF 0%, #4A1FCC 100%);
+            color: white; border: none; border-radius: 20px;
+            font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: 0 8px 24px rgba(98,54,255,0.35);
+        }
+        .btn-generate:active { transform: scale(0.98); }
+
+        .btn-icon {
+            width: 34px; height: 34px; border-radius: 11px;
+            background: rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .btn-note {
+            text-align: center; font-size: 11px; color: var(--ink-muted);
+            font-weight: 600; margin-top: 12px; text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="index.html" class="back-btn" title="Back to Dashboard">
+                <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div class="header-text">
+                <h1 data-i18n="reportTitle">Financial Report</h1>
+                <p data-i18n="reportSubtitle">Generate & export PDF</p>
+            </div>
+            <button onclick="toggleAppLanguage()" style="background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.25); color:white; font-size:11px; font-weight:700; padding:6px 10px; border-radius:12px; cursor:pointer;">
+                <span id="lang-text">SW</span>
+            </button>
+            <div class="header-badge">Live</div>
+        </div>
+    </div>
+
+    <!-- SUMMARY STRIP -->
+    <div class="summary-strip">
+        <div class="net-block">
+            <div class="net-label" data-i18n="netProfit">Estimated Net Profit</div>
+            <div class="net-value" id="p-net">TZS 0</div>
+        </div>
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="label" data-i18n="totalRevenue">Total Income</div>
+                <div class="value income" id="p-income">TZS 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label" data-i18n="totalCost">Total Expenses</div>
+                <div class="value expense" id="p-expense">TZS 0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+        <div class="sticky-filter">
+            <div class="section-label" style="margin-top:0;" data-i18n="filterPeriod">Select Period</div>
+            <div class="filter-card">
+                <div class="quick-btns">
+                    <button class="qbtn" id="btn-today" onclick="setQuickDate('today', this)" data-i18n="today">Today</button>
+                    <button class="qbtn" id="btn-week" onclick="setQuickDate('week', this)" data-i18n="thisWeek">This Week</button>
+                    <button class="qbtn" id="btn-month" onclick="setQuickDate('month', this)" data-i18n="thisMonth">This Month</button>
+                    <button class="qbtn" id="btn-all" onclick="setQuickDate('all', this)" data-i18n="allTime">All Time</button>
+                </div>
+                <div class="date-row">
+                    <div class="date-group">
+                        <label data-i18n="from">From Date</label>
+                        <input type="date" id="report-from" onchange="updatePreview()">
+                    </div>
+                    <div class="date-group">
+                        <label data-i18n="to">To Date</label>
+                        <input type="date" id="report-to" onchange="updatePreview()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="generate-wrap">
+            <button class="btn-generate" onclick="generatePDF()">
+                <div class="btn-icon">
+                    <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </div>
+                <span data-i18n="generatePdf">Generate PDF Report</span>
+            </button>
+            <p class="btn-note" data-i18n="securedDoc">📄 Secured Financial Document</p>
+        </div>
+    </div>
+
+    <script>
+        function showNotification(msg) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:#1e1e2d; color:#fff; padding:12px 20px; border-radius:14px; font-weight:600; font-size:13px; box-shadow:0 8px 25px rgba(0,0,0,0.2);';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+        window.alert = function(msg) {
+            showNotification(msg);
+        };
+
+        function setQuickDate(period, btn) {
+            document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const today = new Date();
+            let fromDate = new Date();
+            
+            today.setHours(23, 59, 59, 999);
+            fromDate.setHours(0, 0, 0, 0);
+
+            if (period === 'today') {
+            } else if (period === 'week') {
+                fromDate.setDate(fromDate.getDate() - 6);
+            } else if (period === 'month') {
+                fromDate.setDate(fromDate.getDate() - 29);
+            } else if (period === 'all') {
+                document.getElementById('report-from').value = '';
+                document.getElementById('report-to').value   = '';
+                updatePreview();
+                return;
+            }
+
+            document.getElementById('report-from').value = toInputDate(fromDate);
+            document.getElementById('report-to').value   = toInputDate(today);
+            updatePreview();
+        }
+
+        function toInputDate(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function filterTransactions() {
+            const from = document.getElementById('report-from').value;
+            const to   = document.getElementById('report-to').value;
+            let all = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+
+            if (from || to) {
+                const fromTime = from ? new Date(from + 'T00:00:00').getTime() : 0;
+                const toTime   = to   ? new Date(to   + 'T23:59:59').getTime() : Infinity;
+                
+                all = all.filter(t => {
+                    const tDate = new Date(t.fullDate || t.date);
+                    const tTime = tDate.getTime();
+                    return tTime >= fromTime && tTime <= toTime;
+                });
+            }
+            return all;
+        }
+
+        function updatePreview() {
+            const transactions = filterTransactions();
+
+            let inc = 0, exp = 0;
+            transactions.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'sale') inc += amt;
+                else exp += amt;
+            });
+
+            const net = inc - exp;
+            const netEl = document.getElementById('p-net');
+            document.getElementById('p-income').innerText  = 'TZS ' + inc.toLocaleString();
+            document.getElementById('p-expense').innerText = 'TZS ' + exp.toLocaleString();
+            netEl.innerText = 'TZS ' + net.toLocaleString();
+            netEl.style.color = net >= 0 ? 'white' : '#FFD2D2';
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const fromDateInput = document.getElementById('report-from').value;
+            const toDateInput   = document.getElementById('report-to').value;
+            const shopName = localStorage.getItem('myShop_name') || "MyShop";
+
+            const transactions = filterTransactions();
+
+            if (transactions.length === 0) {
+                const msg = typeof t === 'function' ? t('noRecordsFound') : "No records found for the selected period.";
+                return alert(msg);
+            }
+
+            let totalIn = 0, totalOut = 0;
+            const rows = transactions.sort((a,b) => new Date(b.fullDate) - new Date(a.fullDate)).map(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'sale') totalIn += amt; else totalOut += amt;
+                return [t.date, t.type.toUpperCase(), t.quantity, t.unitType || '-', t.name, `TZS ${amt.toLocaleString()}`];
+            });
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            doc.setFontSize(22);
+            doc.setTextColor(98, 54, 255);
+            doc.setFont("helvetica", "bold");
+            doc.text(shopName.toUpperCase(), pageWidth / 2, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.setFont("helvetica", "normal");
+            const periodText = `FINANCIAL STATEMENT REPORT | ${fromDateInput || 'ALL TIME'} TO ${toDateInput || 'PRESENT'}`;
+            doc.text(periodText, pageWidth / 2, 28, { align: 'center' });
+
+            doc.setDrawColor(98, 54, 255);
+            doc.setLineWidth(0.5);
+            doc.line(20, 32, pageWidth - 20, 32);
+
+            const cardW = 58;
+            const startY = 42;
+
+            doc.setDrawColor(16, 185, 129);
+            doc.roundedRect(14, startY, cardW, 18, 2, 2, 'D');
+            doc.setTextColor(16, 185, 129);
+            doc.setFontSize(8); doc.text("TOTAL INCOME", 18, startY + 6);
+            doc.setFontSize(11); doc.text(`TZS ${totalIn.toLocaleString()}`, 18, startY + 13);
+
+            doc.setDrawColor(239, 68, 68);
+            doc.roundedRect(14 + cardW + 3, startY, cardW, 18, 2, 2, 'D');
+            doc.setTextColor(239, 68, 68);
+            doc.setFontSize(8); doc.text("TOTAL EXPENSES", 14 + cardW + 7, startY + 6);
+            doc.setFontSize(11); doc.text(`TZS ${totalOut.toLocaleString()}`, 14 + cardW + 7, startY + 13);
+
+            doc.setDrawColor(98, 54, 255);
+            doc.roundedRect(14 + (cardW * 2) + 6, startY, cardW, 18, 2, 2, 'D');
+            doc.setTextColor(98, 54, 255);
+            doc.setFontSize(8); doc.text("NET PROFIT", 14 + (cardW * 2) + 10, startY + 6);
+            doc.setFontSize(11); doc.text(`TZS ${(totalIn - totalOut).toLocaleString()}`, 14 + (cardW * 2) + 10, startY + 13);
+
+            doc.autoTable({
+                startY: 68,
+                head: [['DATE', 'TYPE', 'QUANTITY', 'UNIT', 'DESCRIPTION', 'AMOUNT']],
+                body: rows,
+                theme: 'striped',
+                styles: { fontSize: 9, cellPadding: 4 },
+                headStyles: {
+                    fillColor: [98, 54, 255],
+                    textColor: [255, 255, 255],
+                    halign: 'center',
+                    fontStyle: 'bold'
+                },
+                columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } },
+                margin: { left: 14, right: 14 },
+                didDrawPage: function(data) {
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(`Generated on ${new Date().toLocaleString()}`, 14, doc.internal.pageSize.getHeight() - 10);
+                }
+            });
+
+            doc.save(`Report_${shopName}_${fromDateInput || 'start'}_to_${toDateInput || 'end'}.pdf`);
+        }
+
+        window.addEventListener('languageChanged', updatePreview);
+        window.addEventListener('cloudDataSynced', updatePreview);
+
+        window.onload = () => {
+            setQuickDate('today', document.getElementById('btn-today'));
+        };
+    </script>
+</body>
+</html>

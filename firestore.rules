@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['type', 'name', 'amount', 'date', 'fullDate'])
+        && data.keys().hasOnly(['id', 'type', 'name', 'quantity', 'unitType', 'unitPrice', 'title', 'amount', 'date', 'fullDate', 'shopName', 'userId'])
+        && data.type in ['sale', 'stock', 'expense']
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.amount is number && data.amount >= 0
+        && data.date is string && data.date.size() <= 30
+        && data.fullDate is string && data.fullDate.size() <= 50
+        && (!('title' in data) || (data.title is string && data.title.size() <= 150))
+        && (!('quantity' in data) || data.quantity is number)
+        && (!('unitType' in data) || (data.unitType is string && data.unitType.size() <= 50))
+        && (!('unitPrice' in data) || data.unitPrice is number)
+        && (!('shopName' in data) || (data.shopName is string && data.shopName.size() <= 100));
+    }
+
+    function isValidShop(data) {
+      return data.keys().hasAll(['name'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (!('ownerId' in data) || (data.ownerId is string && data.ownerId.size() <= 128))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50));
+    }
+
+    // Transactions collection
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if isValidTransaction(incoming());
+      allow update: if isValidTransaction(incoming());
+      allow delete: if true;
+    }
+
+    // Shops collection
+    match /shops/{shopId} {
+      allow read: if true;
+      allow create, update: if isValidShop(incoming());
+      allow delete: if true;
+    }
+  }
+}

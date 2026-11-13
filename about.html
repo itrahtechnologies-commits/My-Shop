@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | MyShop</title>
+    <meta name="theme-color" content="#6236FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyShop">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/i18n.js"></script>
+    <script type="module" src="/src/pwa.ts"></script>
+    <style>
+        :root {
+            --primary-purple: #6236FF;
+            --bg-color: #F8F9FA;
+            --text-dark: #1A1A1A;
+            --text-gray: #757575;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header - Background now matches body, radius and version removed */
+        .header {
+            background: transparent; /* Zifanane na body yote */
+            color: var(--text-dark); /* Maandishi sasa yawe meusi ili yaonekane */
+            padding: 60px 20px 20px 20px;
+            text-align: center;
+            border-radius: 0;
+            box-shadow: none; /* Shadow imeondolewa kwa muonekano safi */
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--primary-purple);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            transition: 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .back-btn:active { transform: scale(0.9); }
+
+        /* Content */
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            flex-grow: 1;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        h1 { margin: 10px 0; font-size: 28px; font-weight: 800; }
+        h2 { font-size: 18px; color: var(--primary-purple); margin-top: 0; }
+        p { line-height: 1.6; color: var(--text-gray); font-size: 15px; }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #F1EFFF;
+            border-radius: 15px;
+        }
+
+        .feature-icon {
+            background: white;
+            color: var(--primary-purple);
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-text {
+            font-weight: 600;
+            font-size: 14px;
+            color: #4A1FCC;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-gray);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="back-btn">
+            <i data-lucide="chevron-left" style="width: 18px;"></i> <span data-i18n="back">Back</span>
+        </a>
+        <button onclick="toggleAppLanguage()" style="position:absolute; top:20px; right:20px; background:white; border:none; padding:8px 14px; border-radius:12px; font-weight:700; font-size:13px; color:var(--primary-purple); cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <span id="lang-text">SW</span>
+        </button>
+        <i data-lucide="store" style="width: 50px; height: 50px; color: var(--primary-purple); margin-bottom: 10px;"></i>
+        <h1 data-i18n="aboutTitle">About MyShop</h1>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 data-i18n="theVision">The Vision</h2>
+            <p data-i18n="visionDesc">
+                MyShop is a modern, lightweight Enterprise Resource Planning (ERP) solution designed specifically for small and medium-sized businesses. 
+                Our goal is to simplify financial tracking and inventory management through an intuitive, executive-style interface.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="keyFeatures">Key Features</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon"><i data-lucide="bar-chart-3" style="width: 18px;"></i></div>
+                    <div class="feature-text" data-i18n="feature1">Real-time Analytics & Growth Tracking</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i data-lucide="package" style="width: 18px;"></i></div>
+                    <div class="feature-text" data-i18n="feature2">Smart Inventory & Stock Management</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i data-lucide="file-text" style="width: 18px;"></i></div>
+                    <div class="feature-text" data-i18n="feature3">Professional Financial PDF Reports</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i data-lucide="zap" style="width: 18px;"></i></div>
+                    <div class="feature-text" data-i18n="feature4">PWA Support for Offline Use</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <h2 data-i18n="developer">Developer</h2>
+            <p style="margin-bottom: 5px;" data-i18n="builtWith">Built with ❤️ by</p>
+            <p style="font-weight: 800; color: var(--text-dark); font-size: 18px; margin-top: 0;">Itrah Matrix Technologies</p>
+            <p>Arusha, Tanzania</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Itrah Matrix. <span data-i18n="allRightsReserved">All rights reserved.</span>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

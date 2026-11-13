@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth | MyShop</title>
+    <meta name="theme-color" content="#6236FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyShop">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/i18n.js"></script>
+    <script type="module" src="/src/firebase.ts"></script>
+    <style>
+        .hidden { display: none; }
+        input:focus { border-color: #6366f1; ring: 2px; ring-color: #6366f1; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 relative">
+        <div class="flex justify-end mb-2">
+            <button type="button" onclick="toggleAppLanguage()" class="text-xs font-bold px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition">
+                <span id="lang-text">SW</span>
+            </button>
+        </div>
+
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white shadow-md border border-indigo-50 p-1.5 flex items-center justify-center overflow-hidden">
+                <img src="/pwa-192x192.png" alt="MyShop App Icon" class="w-full h-full object-contain" referrerpolicy="no-referrer" />
+            </div>
+            <h1 class="text-3xl font-bold text-indigo-600">MyShop</h1>
+            <p id="sub-title" class="text-gray-400 mt-1.5" data-i18n="businessMgmt">Professional Business Management</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="usernameOrEmail">Username or Email</label>
+                <input type="text" id="l_user" placeholder="Username or Email" data-i18n-placeholder="usernameOrEmail" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="password">Password</label>
+                <input type="password" id="l_pass" placeholder="Password" data-i18n-placeholder="password" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-md hover:shadow-lg" data-i18n="signIn">
+                SIGN IN
+            </button>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase tracking-wider" data-i18n="orDivider">OR</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button type="button" onclick="continueWithGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition flex items-center justify-center gap-3 shadow-sm active:scale-[0.99]">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <span data-i18n="continueWithGoogle">Continue with Google</span>
+            </button>
+
+            <p class="text-center text-sm text-gray-500 pt-2">
+                <span data-i18n="dontHaveAccount">Don't have an account?</span> <a href="#" onclick="toggle(true)" class="text-indigo-600 font-bold underline" data-i18n="signUp">Sign Up</a>
+            </p>
+        </form>
+
+        <form id="signupForm" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="shopName">Shop Name</label>
+                <input type="text" id="s_shop" placeholder="Shop Name" data-i18n-placeholder="shopName" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="emailAddress">Email Address</label>
+                <input type="email" id="s_email" placeholder="Email Address" data-i18n-placeholder="emailAddress" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="createUsername">Create Username</label>
+                <input type="text" id="s_user" placeholder="Create Username" data-i18n-placeholder="createUsername" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5" data-i18n="createPassword">Create Password</label>
+                <input type="password" id="s_pass" placeholder="Create Password" data-i18n-placeholder="createPassword" required 
+                    class="w-full bg-gray-50 border border-gray-200 p-3.5 rounded-xl outline-none transition-all text-gray-800">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-md hover:shadow-lg" data-i18n="createAccount">
+                CREATE ACCOUNT
+            </button>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase tracking-wider" data-i18n="orDivider">OR</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button type="button" onclick="continueWithGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition flex items-center justify-center gap-3 shadow-sm active:scale-[0.99]">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <span data-i18n="continueWithGoogle">Continue with Google</span>
+            </button>
+
+            <p class="text-center text-sm text-gray-500 pt-2">
+                <span data-i18n="alreadyHaveAccount">Already have an account?</span> <a href="#" onclick="toggle(false)" class="text-indigo-600 font-bold underline" data-i18n="login">Login</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+
+        function toggle(isSignup) {
+            loginForm.classList.toggle('hidden', isSignup);
+            signupForm.classList.toggle('hidden', !isSignup);
+        }
+
+        function showFeedback(msg, isSuccess = false) {
+            let box = document.getElementById('feedback-box');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'feedback-box';
+                box.style.padding = '12px 16px';
+                box.style.borderRadius = '12px';
+                box.style.marginBottom = '16px';
+                box.style.fontSize = '14px';
+                box.style.fontWeight = '600';
+                box.style.textAlign = 'center';
+                const container = document.querySelector('.max-w-md');
+                const subTitle = document.getElementById('sub-title');
+                subTitle.parentNode.appendChild(box);
+            }
+            box.style.background = isSuccess ? '#DCFCE7' : '#FEE2E2';
+            box.style.color = isSuccess ? '#166534' : '#991B1B';
+            box.style.border = isSuccess ? '1px solid #86EFAC' : '1px solid #FCA5A5';
+            box.innerText = msg;
+            box.style.display = 'block';
+            setTimeout(() => { if (box) box.style.display = 'none'; }, 4000);
+        }
+
+        window.alert = function(msg) {
+            showFeedback(msg, msg.includes('success') || msg.includes('Account created'));
+        };
+
+        // --- SIGN UP LOGIC ---
+        signupForm.onsubmit = (e) => {
+            e.preventDefault();
+            const shop = document.getElementById('s_shop').value.trim();
+            const email = document.getElementById('s_email').value.trim().toLowerCase();
+            const user = document.getElementById('s_user').value.trim().toLowerCase();
+            const pass = document.getElementById('s_pass').value;
+
+            // Tunahifadhi taarifa za mtumiaji
+            localStorage.setItem('stored_user', user);
+            localStorage.setItem('stored_email', email);
+            localStorage.setItem('stored_pass', pass);
+            localStorage.setItem('myShop_name', shop); 
+
+            showFeedback(t('accountCreatedSuccess'), true);
+            toggle(false);
+            document.getElementById('l_user').value = user;
+        };
+
+        // --- SIGN IN LOGIC ---
+        loginForm.onsubmit = (e) => {
+            e.preventDefault();
+            const inputVal = document.getElementById('l_user').value.trim().toLowerCase();
+            const pass = document.getElementById('l_pass').value;
+
+            const savedUser = (localStorage.getItem('stored_user') || '').toLowerCase();
+            const savedEmail = (localStorage.getItem('stored_email') || '').toLowerCase();
+            const savedPass = localStorage.getItem('stored_pass');
+            const savedShopName = localStorage.getItem('myShop_name') || 'MyShop';
+
+            const userMatches = (inputVal === savedUser) || (savedEmail && inputVal === savedEmail);
+
+            if (userMatches && pass === savedPass) {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('myShop_name', savedShopName); 
+                window.location.href = 'index.html'; 
+            } else {
+                showFeedback(t('loginError'), false);
+            }
+        };
+
+        // --- GOOGLE SIGN IN LOGIC ---
+        async function continueWithGoogle() {
+            try {
+                if (!window.FirebaseCloud || !window.FirebaseCloud.loginWithGoogle) {
+                    showFeedback("Firebase Auth is loading, please try again in a few seconds...", false);
+                    return;
+                }
+                const user = await window.FirebaseCloud.loginWithGoogle();
+                if (user) {
+                    const existingShop = localStorage.getItem('myShop_name');
+                    const defaultShop = user.displayName ? `${user.displayName}'s Shop` : 'MyShop';
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('stored_user', user.displayName || user.email || 'Google User');
+                    localStorage.setItem('stored_email', user.email || '');
+                    localStorage.setItem('myShop_name', existingShop || defaultShop);
+
+                    showFeedback(t('googleLoginSuccess'), true);
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 800);
+                }
+            } catch (err) {
+                console.error('Google Sign-In Error:', err);
+                const errMsg = err?.message || '';
+                if (errMsg.includes('popup-closed-by-user')) {
+                    showFeedback(t('googleLoginFailed'), false);
+                } else {
+                    showFeedback(t('googleLoginFailed'), false);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
